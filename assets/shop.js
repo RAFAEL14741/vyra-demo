@@ -56,13 +56,32 @@ const P = [
     d:'Long sleeve, deep V neckline, one piece.',
     why:'From a slow mat session straight to dinner. Covered, warm, and one less outfit decision.',
     vs:[v('Black','#111214','black','DcyWxtnFkft'), v('Cream','#ece6da','neutral','DcyWHj4lrxy')]},
+  {id:'blackbra', cat:'set', name:'Black Bra Set', price:85, w:['legs','core'],
+    d:'Sports bra + shorts or leggings.',
+    why:'The set you will actually wear four days a week. Shorts for leg day, swap to leggings when the gym is cold.',
+    vs:[v('Black','#111214','black','Dcuk-X9Fom-','DcweCb5Fu9w')]},
+  {id:'white', cat:'set', name:'White Zip Set', price:95, w:['core','street'],
+    d:'Zip-up top + shorts.',
+    why:'Zip up for the walk in, unzip for the warm-up. Bright white reads clean on camera on core and ball days.',
+    vs:[v('White','#f2f2f0','neutral','De2-PRblhb1','De0XHZXlpk1')]},
 ];
+// extra shoot photos per product (cards scrub through them, drawer shows them all, lookbook uses the rest)
+const G = {red:['De7CKDNFp4q','De7BQGZFkrK','De7Eb8Vlsz3'], sky:['De6_Ok-FpVo','De6_ujwFgZx','De2-dRnFgde','De7AaypFugJ','De7Avdhlus0'],
+  brown:['De0QLlnljzS','DcukTfJlupH','De0PZVqFtlN','De0PuJUFnl3','DcwgyJblkxm','De0QnWRFu6P','DckCbPMlvBp'],
+  black:['De0T2zKFlK6','De2_7tdlvRY','De0VHl2lmrp','De0WnNcFkXz'], slate:['DculUi2ls6i','De3DOVuFkvd','De5j_YlFoV7','DcultzSlqqu'],
+  wine:['De3EOTDlgyf','De3BeKalsap'], cream:['De2-yaGlner'], blackbra:['Dc98gyoloBh'], white:['De0YTdpFpXd'],
+  pastel:['Dc1vWpBlhmI','Dc1vMSblnVm','De2_PYTFkV7','DcyVkIZFr1_','Dc1vt06Frbi','De3ANgtxdHD','Dchc9MBx7qx'],
+  backless:['De0O4dJFrq8'], halter:['Dce9Hqexf-N'], tee:['DcccBrMRCds'], lsjump:[]};
+const LOOKGRP = {red:'Red', sky:'Sky', brown:'Earth', wine:'Earth', black:'Black', blackbra:'Black', slate:'Slate', pastel:'Soft tones', cream:'Soft tones', white:'Soft tones'};
+P.forEach(p => { p.g = G[p.id] || []; p.look = LOOKGRP[p.id] || 'One-pieces'; });
+// every photo of a product, the chosen color first (cards scrub these, the drawer strip shows them)
+const pics = (p, vi = 0) => [...new Set([p.vs[vi].a, p.vs[vi].b, ...p.vs.filter((_, i) => i !== vi).map(x => x.a), ...p.g].filter(Boolean))];
 const WK = [   // shop by workout — real gym shots from VYRA's feed
-  {k:'legs', t:'Leg day', s:'Squats, lunges, hip thrusts', img:'Dcuk-X9Fom-'},
+  {k:'legs', t:'Leg day', s:'Squats, lunges, hip thrusts', img:'DculUi2ls6i'},
   {k:'upper', t:'Upper body', s:'Rows, presses, curls', img:'De0O4dJFrq8'},
   {k:'pilates', t:'Pilates & stretch', s:'Mat work, mobility, flow', img:'De2-yaGlner'},
-  {k:'core', t:'Core & ball work', s:'Planks, slams, balance', img:'De2-PRblhb1'},
-  {k:'street', t:'Gym to street', s:'Train, then keep it on', img:'De0XHZXlpk1'},
+  {k:'core', t:'Core & ball work', s:'Planks, slams, balance', img:'De0VHl2lmrp'},
+  {k:'street', t:'Gym to street', s:'Train, then keep it on', img:'DcyVkIZFr1_'},
 ];
 const FAM = [['red','#a3161f','Red'],['blue','#2bb6e8','Blue'],['brown','#4a2a20','Brown'],['black','#111214','Black'],['slate','#6f7590','Slate'],['pastel','#efc6d2','Pastel'],['neutral','#ece6da','Neutral']];
 const SIZES = ['XS','S','M','L','XL'];
@@ -100,6 +119,20 @@ shop.innerHTML = `
   <div class="s-meta"><span id="sCount"></span><span id="sActive"></span><button data-open="sg">Size guide</button></div>
   <div class="s-grid" id="sGrid"></div>
 
+  <section class="s-spin" aria-labelledby="spH">
+    <div class="s-reel" id="spReel" aria-hidden="true"><img id="spImg" src="${IMG(P[0].vs[0].a)}" alt=""><i></i></div>
+    <div class="s-spinc"><h3 id="spH">Can't pick? Spin a look.</h3>
+      <p class="s-lead" id="spLead">One tap and we pick a set for today. Pick a workout above first and the spin only lands on sets made for it.</p>
+      <div id="spRes" aria-live="polite"></div>
+      <button class="s-btn s-spinbtn" id="spBtn">Spin a look</button></div>
+  </section>
+
+  <section class="s-look" aria-labelledby="lkH">
+    <div class="s-lktop"><div><h3 id="lkH">From the shoot</h3><p class="s-lead">Every photo from the VYRA shoot. Drag through, tap any look to shop it.</p></div>
+      <div class="s-lkchips" id="lkChips"></div></div>
+    <div class="s-lkrail" id="lkRail" data-lenis-prevent-wheel></div>
+  </section>
+
   <section class="s-fab" aria-labelledby="fabH">
     <div class="s-fabimg"><img src="${IMG('fabric')}" alt="VYRA set in its packaging, close up" loading="lazy" width="900" height="900"></div>
     <div><h3 id="fabH">The fabric does the work.</h3>
@@ -128,7 +161,6 @@ shop.innerHTML = `
 
   <section class="s-ig" aria-labelledby="igH">
     <div class="s-igtop"><h3 id="igH">Train with us on Instagram</h3><a class="s-btn ghost s-igbtn" href="https://www.instagram.com/vyra.movement/" target="_blank" rel="noopener">Follow @vyra.movement</a></div>
-    <div class="s-igrow">${['De7Eb8Vlsz3','Dcuruollmv-','DcvuX7GFnit','De6-l69lpWQ','DcwgT_3FkyV','De0PZVqFtlN'].map(c=>`<a href="https://www.instagram.com/vyra.movement/" target="_blank" rel="noopener" aria-label="VYRA on Instagram"><img src="${IMG(c)}" alt="" loading="lazy" width="720" height="960"></a>`).join('')}</div>
     <form class="s-drop" id="sDrop"><div><b>Get the next drop first.</b><span>New colors sell out fast. We send one email when they land.</span></div>
       <label class="s-vh" for="sMail">Email</label><input id="sMail" type="email" required placeholder="you@email.com" autocomplete="email"><button class="s-btn" type="submit">Notify me</button></form>
   </section>
@@ -146,7 +178,7 @@ function card(p, vi) {
   return `<article class="s-card" data-id="${p.id}" data-v="${vi}" tabindex="0" aria-label="${p.name}, ${x.n}, ${money(p.price)}">
     <div class="s-ph">${p.tag ? `<span class="s-tag">${p.tag}</span>` : ''}
       <img class="a" src="${IMG(x.a)}" alt="${p.name} in ${x.n}" loading="lazy" width="720" height="960">
-      ${x.b ? `<img class="b" src="${IMG(x.b)}" alt="" loading="lazy" width="720" height="960">` : ''}
+      ${(() => { const ps = pics(p, vi).slice(0, 6); return ps.length > 1 ? `<span class="s-ticks" data-pics="${ps.join(',')}">${ps.map((_, i) => `<b class="${i ? '' : 'on'}"></b>`).join('')}</span>` : ''; })()}
       <button class="s-quick" tabindex="-1" aria-hidden="true">+</button></div>
     <div class="s-info"><div><h4>${p.name}</h4><div class="s-sub">${p.vs.map(y=>`<span class="s-dot" style="--c:${y.c}" title="${y.n}"></span>`).join('')}<span>${p.vs.length > 1 ? p.vs.length + ' colors' : x.n}</span></div></div>
       <div class="s-pr">${money(p.price)}<small>est.</small></div></div></article>`;
@@ -270,7 +302,8 @@ function drawProduct() {
                               : 'Fitted through the body with a little give at the torso. Between sizes? Go by your hips.';
   const also = P.filter(q => q.id !== p.id && q.w.some(k => p.w.includes(k))).slice(0, 3);
   $('#pdBody').innerHTML = `
-    <div class="s-gal"><img src="${IMG(x.a)}" alt="${p.name} in ${x.n}">${x.b ? `<img src="${IMG(x.b)}" alt="">` : ''}</div>
+    <div class="s-strip" data-lenis-prevent>${pics(p, vi).map((c, i) => `<img src="${IMG(c)}" alt="${i ? '' : p.name + ' in ' + x.n}" ${i > 1 ? 'loading="lazy"' : ''}>`).join('')}</div>
+    <div class="s-cnt">${pics(p, vi).length} photos · swipe</div>
     <h3>${p.name}</h3><div class="s-p">${money(p.price)}<small>est. price</small></div><p class="s-d">${p.d}</p>
     <div class="s-why"><b>Why it works</b><p>${p.why}</p><div class="s-best">${p.w.map(k=>`<span>${wkById[k].t}</span>`).join('')}</div></div>
     <div class="s-lab">Color <b>${x.n}</b></div>
@@ -295,6 +328,65 @@ $('#pdAdd').addEventListener('click', () => {
   if (!cur.size) { const pd = $('#pd'); pd.classList.remove('shake'); void pd.offsetWidth; pd.classList.add('shake'); return; }
   add(cur.p.id, cur.vi, cur.size); close();
 });
+
+// ---------- card photo scrub: move across a card to flip through its photos ----------
+grid.addEventListener('pointermove', e => {
+  if (e.pointerType !== 'mouse') return;
+  const ph = e.target.closest('.s-ph'), tk = ph?.querySelector('.s-ticks'); if (!tk) return;
+  const ps = tk.dataset.pics.split(','), r = ph.getBoundingClientRect();
+  const i = Math.min(ps.length - 1, Math.max(0, Math.floor((e.clientX - r.left) / r.width * ps.length)));
+  if (ph._i === i) return; ph._i = i;
+  if (!ph._pre) { ph._pre = 1; ps.forEach(c => { new Image().src = IMG(c); }); }
+  ph.querySelector('img.a').src = IMG(ps[i]); tk.querySelectorAll('b').forEach((b, j) => b.classList.toggle('on', j === i));
+});
+grid.addEventListener('pointerout', e => {
+  const ph = e.target.closest('.s-ph'); if (!ph || ph.contains(e.relatedTarget) || ph._i == null) return;
+  const tk = ph.querySelector('.s-ticks'); ph._i = null;
+  ph.querySelector('img.a').src = IMG(tk.dataset.pics.split(',')[0]); tk.querySelectorAll('b').forEach((b, j) => b.classList.toggle('on', !j));
+});
+
+// ---------- lookbook rail: the whole shoot, filter by collection, tap to shop ----------
+const LOOK = P.flatMap(p => pics(p).slice(1).map(c => ({c, id: p.id, vi: Math.max(0, p.vs.findIndex(x => x.a === c)), grp: p.look})));
+const GRPS = ['All', ...new Set(P.map(p => p.look))];
+let lkGrp = 'All';
+$('#lkChips').innerHTML = GRPS.map(g => `<button data-lk="${g}" class="${g === 'All' ? 'on' : ''}">${g}</button>`).join('');
+function drawLook() {
+  const items = LOOK.filter(l => lkGrp === 'All' || l.grp === lkGrp);
+  $('#lkRail').innerHTML = items.map((l, i) => `<button class="s-lk" data-lid="${l.id}" data-lv="${l.vi}" style="--k:${i % 8}"><img src="${IMG(l.c)}" alt="" loading="lazy" width="720" height="960" draggable="false"><span>${byId[l.id].name}</span></button>`).join('');
+  $('#lkRail').scrollLeft = 0;
+}
+$('#lkChips').addEventListener('click', e => { const b = e.target.closest('[data-lk]'); if (!b) return; lkGrp = b.dataset.lk;
+  $('#lkChips').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); drawLook(); });
+{ // drag to scroll with the mouse (touch scrolls natively); a drag never counts as a tap
+  const rail = $('#lkRail'); let down = false, x0 = 0, s0 = 0, moved = false;
+  rail.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') return; down = true; moved = false; x0 = e.clientX; s0 = rail.scrollLeft; });
+  addEventListener('pointermove', e => { if (!down) return; const dx = e.clientX - x0; if (Math.abs(dx) > 5) { moved = true; rail.classList.add('drag'); } rail.scrollLeft = s0 - dx; });
+  addEventListener('pointerup', () => { down = false; rail.classList.remove('drag'); });
+  rail.addEventListener('click', e => { if (moved) { e.preventDefault(); moved = false; return; }
+    const b = e.target.closest('[data-lid]'); if (b) openProduct(b.dataset.lid, +b.dataset.lv); });
+  rail.addEventListener('wheel', e => { if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) e.stopPropagation(); }, {passive: true});
+}
+drawLook();
+
+// ---------- spin a look: a slot reel that slows down and lands on a set ----------
+let spinning = false;
+$('#spBtn').addEventListener('click', () => {
+  if (spinning) return; spinning = true;
+  const pool = P.filter(p => !wk || p.w.includes(wk)), pick = pool[Math.floor(Math.random() * pool.length)];
+  const img = $('#spImg'), reel = $('#spReel'), res = $('#spRes'), btn = $('#spBtn');
+  res.innerHTML = ''; btn.disabled = true; btn.textContent = 'Spinning…'; reel.classList.add('go');
+  const steps = reduce ? 1 : 16; let n = 0;
+  (function tick() {
+    const p = n < steps - 1 ? P[(Math.random() * P.length) | 0] : pick;
+    img.src = IMG(p.vs[0].a); reel.classList.remove('flip'); void reel.offsetWidth; reel.classList.add('flip');
+    if (++n < steps) return setTimeout(tick, 45 + n * n * 1.6);   // quadratic slow-down
+    reel.classList.remove('go'); reel.classList.add('land'); setTimeout(() => reel.classList.remove('land'), 600);
+    res.innerHTML = `<div class="s-spres"><b>${pick.name}</b><span>${money(pick.price)} est.${wk ? ' · made for ' + wkById[wk].t.toLowerCase() : ''}</span><p>${pick.why}</p>
+      <button class="s-btn ghost" data-spshop="${pick.id}">Shop this look</button></div>`;
+    btn.disabled = false; btn.textContent = 'Spin again'; spinning = false;
+  })();
+});
+$('#spRes').addEventListener('click', e => { const b = e.target.closest('[data-spshop]'); if (b) openProduct(b.dataset.spshop, 0); });
 
 // ---------- cart (kept in this browser only) ----------
 let bag = [];

@@ -200,3 +200,78 @@
   .s-how ol{grid-template-columns:1fr}.s-drop{grid-template-columns:1fr}.s-drop .s-btn{width:100%}
   .s-meta{flex-wrap:wrap;gap:8px}.s-feat > span{left:16px;bottom:16px}}
 .s-fab h3,.s-how h3,.s-faq h3,.s-ig h3{text-wrap:balance}
+
+/* ===== v3: LIGHT store — same soft grey as VYRA's studio wall, so the photos sit ON the page ===== */
+#shop,.s-dr{--paper:#efedea;--ink:#151517;--mute:rgba(21,21,23,.58);--line:rgba(21,21,23,.13);--bg:var(--paper);color:var(--ink)}
+#shop{background:var(--paper);border-radius:28px 28px 0 0;border-top:0;position:relative;z-index:2}
+.s-ph,.s-igrow a{background:#e2dfdb}
+.s-tag{background:rgba(255,255,255,.78);color:var(--ink)}
+.s-btn{color:#f4f2ef}.s-btn:hover{background:#000}
+.s-btn.ghost{color:var(--ink)}.s-btn.ghost:hover{background:rgba(21,21,23,.05)}
+.s-quick{color:#fff}
+.s-tabs button.on,.s-sz button.on{color:#fff}
+.s-sz button:hover{border-color:rgba(21,21,23,.4)}
+.s-feat,.s-wt{color:#f4f2ef}
+.s-dr{background:#f6f4f1;border-left-color:var(--line)}
+.s-vs button.on{box-shadow:0 0 0 3px #f6f4f1,0 0 0 4px var(--ink)}
+.s-drop input,.s-fin input{background:rgba(21,21,23,.035)}
+.s-why{background:rgba(21,21,23,.03)}
+.s-sg tr.hit td{background:rgba(21,21,23,.07)}
+.s-ship i{background:linear-gradient(90deg,var(--ink) calc(var(--p) * 100%),rgba(21,21,23,.1) 0)}
+.s-cols button{border-color:rgba(21,21,23,.25)}
+.s-foot img,.s-band img{filter:invert(1)}
+.toast{background:#151517;color:#f4f2ef}
+/* nav turns light glass over the store */
+.nav.solid{--ink:#151517;--line:rgba(21,21,23,.14);color:#151517;background:rgba(239,237,234,.8)}
+.nav.solid img{filter:invert(1)}
+.nav.solid .bag.pop{animation-name:popL}@keyframes popL{40%{transform:scale(1.14);background:#151517;color:#fff}}
+/* card photo scrub ticks */
+.s-ticks{position:absolute;z-index:2;left:12px;right:12px;bottom:10px;display:flex;gap:4px;opacity:0;transition:opacity .25s}
+.s-ticks b{flex:1;height:2px;border-radius:2px;background:rgba(255,255,255,.45)}.s-ticks b.on{background:#fff}
+.s-card:hover .s-ticks{opacity:1}
+.s-card:hover .s-ph img.a{transform:scale(1.1)}   /* no zoom-pulse while scrubbing */
+.s-card:hover .s-quick{bottom:22px}
+/* drawer photo strip */
+.s-strip{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -22px;padding:0 22px;scrollbar-width:none}
+.s-strip::-webkit-scrollbar{display:none}
+.s-strip img{flex:0 0 78%;aspect-ratio:3/4;object-fit:cover;border-radius:12px;scroll-snap-align:start;background:#e2dfdb}
+.s-cnt{font-size:12px;color:var(--mute);margin-top:10px}
+/* spin a look */
+.s-spin{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(28px,5vw,80px);align-items:center;margin-top:clamp(90px,12vh,140px);
+  padding:clamp(22px,3vw,40px);border-radius:28px;background:#151517;color:#f4f2ef;--ink:#f4f2ef;--mute:rgba(244,242,239,.62);--line:rgba(244,242,239,.16)}
+.s-spin h3{font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(36px,4.6vw,64px);line-height:1;text-wrap:balance}
+.s-reel{position:relative;aspect-ratio:3/4;max-height:560px;border-radius:18px;overflow:hidden;background:#2a2a2d;justify-self:center;width:100%;max-width:420px}
+.s-reel img{width:100%;height:100%;object-fit:cover;display:block}
+.s-reel.flip img{animation:s-flip .12s ease-out}@keyframes s-flip{from{transform:translateY(-6%);filter:blur(3px)}to{transform:none;filter:none}}
+.s-reel.go::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(21,21,23,.35),transparent 25%,transparent 75%,rgba(21,21,23,.35))}
+.s-reel.land{animation:s-land .6s cubic-bezier(.3,1.6,.5,1)}@keyframes s-land{30%{transform:scale(1.035)}}
+.s-spinbtn{width:auto;padding:16px 30px;background:#f4f2ef;color:#151517;margin-top:22px}.s-spinbtn:hover{background:#fff}
+.s-spres{border-top:1px solid var(--line);padding-top:16px}
+.s-spres b{font-family:'Instrument Serif',serif;font-weight:400;font-size:30px;display:block}
+.s-spres span{font-size:13px;color:var(--mute)}
+.s-spres p{color:var(--mute);font-size:15px;line-height:1.5;margin:10px 0 14px;max-width:46ch}
+.s-spres .s-btn{width:auto;padding:12px 22px;color:#f4f2ef;border-color:rgba(244,242,239,.3)}
+/* lookbook rail */
+.s-look{margin-top:clamp(90px,12vh,140px)}
+.s-look h3{font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(36px,4.6vw,64px);line-height:1}
+.s-lktop{display:flex;justify-content:space-between;align-items:end;gap:20px;flex-wrap:wrap;margin-bottom:22px}
+.s-lktop .s-lead{margin:12px 0 0}
+.s-lkchips{display:flex;gap:6px;flex-wrap:wrap}
+.s-lkchips button{font:inherit;font-size:13px;padding:9px 15px;border-radius:99px;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer;transition:.2s}
+.s-lkchips button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.s-lkrail{display:flex;gap:12px;overflow-x:auto;margin:0 calc(-1 * clamp(16px,4vw,48px));padding:4px clamp(16px,4vw,48px) 14px;scroll-snap-type:x proximity;scrollbar-width:thin;cursor:grab;user-select:none}
+.s-lkrail.drag{cursor:grabbing;scroll-snap-type:none}.s-lkrail.drag .s-lk{pointer-events:none}
+.s-lk{flex:0 0 clamp(170px,17vw,250px);aspect-ratio:3/4;position:relative;border:0;padding:0;border-radius:14px;overflow:hidden;background:#e2dfdb;cursor:pointer;scroll-snap-align:start;
+  animation:s-lkin .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--k) * 40ms)}
+@keyframes s-lkin{from{opacity:0;transform:translateY(14px)}}
+.s-lk img{width:100%;height:100%;object-fit:cover;transition:transform .8s cubic-bezier(.2,.8,.2,1)}
+.s-lk span{position:absolute;left:10px;bottom:10px;font-size:12px;padding:6px 11px;border-radius:99px;background:rgba(255,255,255,.85);color:#151517;opacity:0;transform:translateY(6px);transition:.25s}
+.s-lk:hover img{transform:scale(1.05)}.s-lk:hover span,.s-lk:focus-visible span{opacity:1;transform:none}
+.s-lk:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+@media(prefers-reduced-motion:reduce){.s-lk{animation:none}.s-reel.flip img,.s-reel.land{animation:none}}
+@media(max-width:760px){#shop{border-radius:20px 20px 0 0}.s-spin{grid-template-columns:1fr}.s-reel{max-width:none;max-height:none}
+  .s-lk span{opacity:1;transform:none}.s-strip img{flex-basis:86%}}
+.s-feat img{filter:none}.s-feat::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(12,12,13,.72))}.s-feat > span{z-index:2}
+.s-lkrail{scroll-padding-inline:clamp(16px,4vw,48px)}.s-strip{scroll-padding-inline:22px}   /* snap-start ignores padding without scroll-padding */
+.s-strip img{flex:0 0 auto;width:78%;min-width:0;height:auto}   /* flex items default to min-width:auto = the img's 720px natural width */
+@media(max-width:760px){.s-strip img{width:86%}}
