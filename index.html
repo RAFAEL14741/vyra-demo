@@ -128,7 +128,6 @@ STATES.forEach((s,i)=>{ if(!s.word) return;
     `<div class="word front" data-s="${i}" aria-hidden="true">${letters(s.word)}</div>`+
     `<div class="info" data-s="${i}"><div class="ff">${s.note.t}</div><div class="k">${s.k}</div><h2>${s.h}</h2><p>${s.p}</p>`+
       `<div class="buy"><span class="price">$${s.price}<small>est.</small></span><button class="cta add" data-name="${s.name}">Add to bag +</button><a class="link" href="#shop">View set</a></div></div>`+
-    s.chips.map((c,j)=>`<div class="chip ${c.side}" data-s="${i}" data-x="${c.at[0]}" data-y="${c.at[1]}" style="--i:${j}"><i></i><b></b><span>${c.t}</span></div>`).join('')+
     `<aside class="fact" data-s="${i}"><div class="fk">Why it works</div><p>${s.note.t}</p><div class="best">${s.note.best.map(b=>`<span>${b}</span>`).join('')}</div></aside>`);
 });
 // Add to bag / View set -> handled by assets/shop.js (opens the product drawer to pick a size)
@@ -155,7 +154,7 @@ for (let s = 0; s < NS; s++) {
 // ---------- three setup ----------
 const canvas = document.getElementById('gl');
 const renderer = new THREE.WebGLRenderer({canvas, antialias:false, alpha:true, powerPreference:'high-performance'});
-const DPR = Math.min(devicePixelRatio, 1.5);
+const DPR = Math.min(devicePixelRatio, innerWidth < 760 ? 1.5 : 2);   // 1.5 on a 2x Mac = canvas stretched 33% = soft photos
 renderer.setPixelRatio(DPR);
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 50);
@@ -211,10 +210,12 @@ const TEX = await Promise.all(meta.states.map(s => loader.loadAsync(`assets/${s.
 TEX.forEach(t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; });
 const plane = () => new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({
   transparent:true, depthWrite:false, depthTest:false,
-  uniforms:{map:{value:null}, uO:{value:0}, uRim:{value:0}, uAsp:{value:.5}, uRimCol:{value:new THREE.Color(1,.86,.74)}},
+  uniforms:{map:{value:null}, uO:{value:0}, uRim:{value:0}, uAsp:{value:.5}, uTx:{value:new THREE.Vector2(1e-3,1e-3)}, uRimCol:{value:new THREE.Color(1,.86,.74)}},
   vertexShader:`varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
-  fragmentShader:`uniform sampler2D map; uniform float uO,uRim,uAsp; uniform vec3 uRimCol; varying vec2 vUv;
-  void main(){ vec4 t=texture2D(map,vUv);
+  fragmentShader:`uniform sampler2D map; uniform float uO,uRim,uAsp; uniform vec2 uTx; uniform vec3 uRimCol; varying vec2 vUv;
+  void main(){ vec4 t=texture2D(map,vUv,-0.5);
+    vec3 bl=(texture2D(map,vUv+vec2(uTx.x,0.0)).rgb+texture2D(map,vUv-vec2(uTx.x,0.0)).rgb+texture2D(map,vUv+vec2(0.0,uTx.y)).rgb+texture2D(map,vUv-vec2(0.0,uTx.y)).rgb)*0.25;
+    t.rgb=clamp(t.rgb+(t.rgb-bl)*0.45*smoothstep(0.92,1.0,t.a),0.0,1.0);   // unsharp, body only (no edge halo)
     // soft BACKLIGHT halo outside the silhouette (no hard inner line = no sticker edge)
     float g=0.0;
     for(int i=0;i<12;i++){ float a=float(i)*0.5236; vec2 o=vec2(cos(a)/uAsp,sin(a))*0.012;
@@ -235,7 +236,7 @@ function setPair(k) {            // morph from state k -> k+1
   [pA,pB,cA,cB].forEach(a => a.needsUpdate = true);
   U.uVortex.value = VORTEX[k];
   [[planeA,k],[planeB,k+1]].forEach(([m,s]) => { const st = meta.states[s];
-    m.material.uniforms.map.value = TEX[s]; m.material.uniforms.uRim.value = RIM[st.name]; m.material.uniforms.uAsp.value = st.w / st.h;
+    m.material.uniforms.map.value = TEX[s]; m.material.uniforms.uRim.value = RIM[st.name]; m.material.uniforms.uAsp.value = st.w / st.h; m.material.uniforms.uTx.value.set(1 / TEX[s].image.width, 1 / TEX[s].image.height);
     if (!matchMedia('(prefers-reduced-motion: reduce)').matches) U.uBurst.value = BURST[k];  // (not `reduce`: it's declared later -> TDZ error on first call)
     m.userData.w = st.w; m.userData.h = st.h; m.userData.logo = st.name === 'logo'; });
   fitPlanes();
@@ -273,6 +274,43 @@ function fitWords() {   // long words (CONFIDENCE, MADE TO MOVE) must fit inside
   });
 }
 await document.fonts.ready;
+// ---------- orbit ring (replaced the pin bubbles): the set's words circle her waist and spin with scroll.
+// Back half renders BEFORE the photo (her body covers it), front half AFTER it -> it really wraps around her.
+const RINGTXT = {red:'High waist ✦ Squat-proof ✦ Leg day ✦ ', blue:'Flare cut ✦ Pilates ✦ Mobility ✦ ', brown:'Fall collection ✦ Halter back ✦ Hides sweat ✦ ', black:'Long sleeve ✦ Leg-day shorts ✦ Gym to street ✦ '};
+const RINGY = {red:-0.62, blue:-0.6, brown:-0.62, black:-0.58};   // shins: clear of the giant word band (waist ring collided with it)
+await document.fonts.load('300 80px Outfit');
+function ringTex(txt) {
+  const c = document.createElement('canvas'); c.width = 4096; c.height = 128; const g = c.getContext('2d');
+  g.font = '300 80px Outfit'; if ('letterSpacing' in g) g.letterSpacing = '14px';
+  const str = txt.toUpperCase(), w = g.measureText(str).width, reps = Math.max(1, Math.round(c.width / w));
+  g.fillStyle = '#ece9e4'; g.textBaseline = 'middle'; g.setTransform(c.width / (w * reps), 0, 0, 1, 0, 0);   // whole repeats -> no seam
+  for (let i = 0; i < reps; i++) g.fillText(str, i * w, 66);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
+}
+const RTEX = Object.fromEntries(Object.entries(RINGTXT).map(([k, txt]) => [k, ringTex(txt)]));
+const RU = {map:{value:null}, uO:{value:0}};
+const ringMat = side => new THREE.ShaderMaterial({transparent:true, depthWrite:false, depthTest:false, side:THREE.DoubleSide,
+  uniforms:{map:RU.map, uO:RU.uO, uSide:{value:side}},
+  vertexShader:`varying vec2 vUv; varying float vZ; void main(){ vUv=uv; vec4 w=modelMatrix*vec4(position,1.0); vZ=w.z; gl_Position=projectionMatrix*viewMatrix*w; }`,
+  fragmentShader:`uniform sampler2D map; uniform float uO,uSide; varying vec2 vUv; varying float vZ;
+  void main(){ if(vZ*uSide<0.0) discard; vec4 t=texture2D(map,vUv);
+    float side=mix(0.2,1.0,smoothstep(0.0,0.18,abs(vZ)));        // fade where the ring turns edge-on
+    gl_FragColor=vec4(t.rgb, t.a*uO*side*(uSide>0.0?0.95:0.35)); }`});
+const ringGeo = new THREE.CylinderGeometry(1, 1, 1, 160, 1, true);
+const ring = new THREE.Group(), ringB = new THREE.Mesh(ringGeo, ringMat(-1)), ringF = new THREE.Mesh(ringGeo, ringMat(1));
+ringB.renderOrder = 0; ringF.renderOrder = 3; ringB.frustumCulled = ringF.frustumCulled = false;
+ring.add(ringB, ringF); ring.rotation.set(0.34, 0, -0.06); scene.add(ring);   // +x tilt: front dips, back rises = seen from slightly above
+let ringState = '';
+function ringUpdate(u, time) {
+  const near = Math.round(u), st = meta.states[near];
+  const v = near === 0 ? 0 : 1 - Math.min(1, Math.max(0, (Math.abs(u - near) - 0.06) / 0.22));
+  if (st.name !== ringState && RTEX[st.name]) { ringState = st.name; RU.map.value = RTEX[st.name];
+    const r = Math.max(0.62, st.w * 0.72), H = r * 2 * Math.PI / 32;   // texture is 32:1 -> height that keeps glyphs undistorted
+    [ringB, ringF].forEach(m => m.scale.set(r, H, r)); ring.position.y = RINGY[st.name]; }
+  RU.uO.value = v * v;
+  const spin = u * Math.PI * 1.15 + time * 0.00022;   // scroll drives the spin, plus a slow idle drift
+  ringB.rotation.y = ringF.rotation.y = -spin;
+}
 addEventListener('resize', resize); setPair(0); resize();
 // ---------- scroll driver: ONE progress value drives everything ----------
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -314,7 +352,7 @@ function frame(time) {
   const u = toU(st.progress);
   const k = Math.min(Math.floor(u), LAST - 1), f = u - k;
   const t = ss(0.16, 0.84, f);
-  setPair(k); U.uT.value = t;
+  setPair(k); U.uT.value = t; ringUpdate(u, time);
   // sharp photos at rest, dots while moving (dots sit exactly on the photo, so the swap is invisible)
   const a0 = 1 - ss(0.0, 0.06, t), b0 = ss(0.94, 1.0, t);
   planeA.material.uniforms.uO.value = a0 * U.uIntro.value ** 4;
