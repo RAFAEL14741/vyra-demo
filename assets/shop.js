@@ -227,9 +227,14 @@ render();
 // ---------- drawers ----------
 document.body.insertAdjacentHTML('beforeend', `
   <div class="s-ov" id="sOv"></div>
-  <aside class="s-dr s-pd" id="pd" role="dialog" aria-modal="true" aria-label="Product" hidden><header><span>Product</span><button class="s-x" data-close aria-label="Close">×</button></header>
-    <div class="s-body" data-lenis-prevent id="pdBody"></div>
-    <footer><button class="s-btn" id="pdAdd">Pick a size</button><a class="s-btn ghost" href="https://ig.me/m/vyra.movement" target="_blank" rel="noopener">Ask VYRA on Instagram</a></footer></aside>
+  <aside class="s-dr s-pd" id="pd" role="dialog" aria-modal="true" aria-label="Product" hidden>
+    <div class="s-qg" id="pdGal">
+      <div class="s-thumbs" id="pdThumbs" data-lenis-prevent></div>
+      <div class="s-stage" id="pdStage" title="Click to zoom"><img id="pdImg" alt=""><button class="s-nav s-prev" data-g="-1" aria-label="Previous photo">‹</button><button class="s-nav s-next" data-g="1" aria-label="Next photo">›</button><span class="s-gcount" id="pdCount"></span><span class="s-zhint">Click to zoom</span></div>
+    </div>
+    <div class="s-qcol"><header><span>Product</span><button class="s-x" data-close aria-label="Close">×</button></header>
+      <div class="s-body" data-lenis-prevent id="pdBody"></div>
+      <footer><button class="s-btn" id="pdAdd">Pick a size</button><a class="s-btn ghost" href="https://ig.me/m/vyra.movement" target="_blank" rel="noopener">Ask VYRA on Instagram</a></footer></div></aside>
   <aside class="s-dr" id="cart" role="dialog" aria-modal="true" aria-label="Bag" hidden><header><span>Your bag (<b id="cN">0</b>)</span><button class="s-x" data-close aria-label="Close">×</button></header>
     <div class="s-body" data-lenis-prevent><div class="s-ship" id="cShip"></div><div id="cLines"></div>
       <div class="s-co" id="cCo"><p>This is where secure checkout goes.</p><div class="s-note">Demo: on the live store this opens card / Apple Pay checkout. For now, send the order by DM.</div></div></div>
@@ -293,23 +298,60 @@ function findSize() {
 }
 ['fW','fH'].forEach(id => $('#' + id).addEventListener('input', findSize));
 
+// ---------- quick-view gallery ----------
+const HI = c => `assets/shop/hi/${c}.webp`;
+let gal = [], gi = 0;
+function drawGal() {
+  gal = pics(cur.p, cur.vi); gi = 0;
+  $('#pdThumbs').innerHTML = gal.map((c, i) => `<button data-gi="${i}" aria-label="Photo ${i + 1}"><img src="${IMG(c)}" alt="" loading="lazy"></button>`).join('');
+  setGal(0);
+}
+function setGal(i) {
+  gi = (i + gal.length) % gal.length; const st = $('#pdStage'), img = $('#pdImg');
+  st.classList.remove('zoom'); img.style.transformOrigin = '';
+  img.src = IMG(gal[gi]); const hi = new Image(); hi.onload = () => { if (gal[gi] && img.src.includes(gal[gi])) img.src = hi.src; }; hi.src = HI(gal[gi]);
+  img.alt = `${cur.p.name}, photo ${gi + 1} of ${gal.length}`;
+  $('#pdCount').textContent = `${gi + 1} / ${gal.length}`;
+  $('#pdThumbs').querySelectorAll('button').forEach((b, j) => b.classList.toggle('on', j === gi));
+  $('#pdThumbs').children[gi]?.scrollIntoView({block: 'nearest', inline: 'nearest'});
+  st.classList.toggle('one', gal.length < 2);
+}
+$('#pdThumbs').addEventListener('click', e => { const b = e.target.closest('[data-gi]'); if (b) setGal(+b.dataset.gi); });
+{
+  const st = $('#pdStage'), img = $('#pdImg'); let sx = 0, sy = 0, swiped = false;
+  const origin = e => { const r = st.getBoundingClientRect();
+    img.style.transformOrigin = `${((e.clientX - r.left) / r.width * 100).toFixed(1)}% ${((e.clientY - r.top) / r.height * 100).toFixed(1)}%`; };
+  st.addEventListener('click', e => {
+    const n = e.target.closest('[data-g]'); if (n) { setGal(gi + +n.dataset.g); return; }
+    if (swiped) { swiped = false; return; }
+    st.classList.toggle('zoom'); if (st.classList.contains('zoom')) origin(e);
+  });
+  st.addEventListener('pointermove', e => { if (st.classList.contains('zoom')) origin(e); });
+  st.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') st.classList.remove('zoom'); });
+  st.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; swiped = false; }, {passive: true});
+  st.addEventListener('touchend', e => {   // swipe = next/prev photo (only when not zoomed)
+    const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+    if (!st.classList.contains('zoom') && Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) { swiped = true; setGal(gi + (dx < 0 ? 1 : -1)); }
+  }, {passive: true});
+  document.addEventListener('keydown', e => { if (openEl?.id !== 'pd' || e.target.closest('input')) return;
+    if (e.key === 'ArrowRight') setGal(gi + 1); if (e.key === 'ArrowLeft') setGal(gi - 1); });
+}
+
 // ---------- product drawer ----------
 let cur = null;   // {p, vi, size}
-function openProduct(id, vi = 0) { cur = {p: byId[id], vi, size: null}; drawProduct(); open('pd'); $('#pdBody').scrollTop = 0; }
+function openProduct(id, vi = 0) { cur = {p: byId[id], vi, size: null}; drawProduct(); drawGal(); open('pd'); $('#pdBody').scrollTop = 0; }
 function drawProduct() {
   const {p, vi, size} = cur, x = p.vs[vi];
   const fit = p.cat === 'set' ? 'Snug, second-skin fit. Between sizes? Size up in the bottoms and keep your usual top size.'
                               : 'Fitted through the body with a little give at the torso. Between sizes? Go by your hips.';
   const also = P.filter(q => q.id !== p.id && q.w.some(k => p.w.includes(k))).slice(0, 3);
   $('#pdBody').innerHTML = `
-    <div class="s-strip" data-lenis-prevent>${pics(p, vi).map((c, i) => `<img src="${IMG(c)}" alt="${i ? '' : p.name + ' in ' + x.n}" ${i > 1 ? 'loading="lazy"' : ''}>`).join('')}</div>
-    <div class="s-cnt">${pics(p, vi).length} photos · swipe</div>
     <h3>${p.name}</h3><div class="s-p">${money(p.price)}<small>est. price</small></div><p class="s-d">${p.d}</p>
-    <div class="s-why"><b>Why it works</b><p>${p.why}</p><div class="s-best">${p.w.map(k=>`<span>${wkById[k].t}</span>`).join('')}</div></div>
     <div class="s-lab">Color <b>${x.n}</b></div>
     <div class="s-vs">${p.vs.map((y,i)=>`<button data-vi="${i}" class="${i===vi?'on':''}" style="--c:${y.c}" aria-label="${y.n}" aria-pressed="${i===vi}"></button>`).join('')}</div>
     <div class="s-lab">Size <button data-open="sg">Find my size</button></div>
     <div class="s-sz">${SIZES.map(s=>`<button data-size="${s}" class="${s===size?'on':''}" aria-pressed="${s===size}">${s}</button>`).join('')}</div>
+    <div class="s-why"><b>Why it works</b><p>${p.why}</p><div class="s-best">${p.w.map(k=>`<span>${wkById[k].t}</span>`).join('')}</div></div>
     <div class="s-acc">
       <details open><summary>Fit</summary><p>${fit}</p></details>
       <details><summary>Fabric &amp; care</summary><p>78% nylon, 22% spandex. Squat-proof, four-way stretch, quick-dry. Wash cold inside out and hang dry; skip fabric softener.</p></details>
@@ -320,12 +362,15 @@ function drawProduct() {
 }
 $('#pdBody').addEventListener('click', e => {
   const c = e.target.closest('[data-vi]'), s = e.target.closest('[data-size]'), a = e.target.closest('[data-alt]');
-  if (c) { cur.vi = +c.dataset.vi; drawProduct(); }
+  if (c) { cur.vi = +c.dataset.vi; drawProduct(); drawGal(); }
   if (s) { cur.size = s.dataset.size; drawProduct(); }
-  if (a) { cur = {p: byId[a.dataset.alt], vi: 0, size: null}; drawProduct(); $('#pdBody').scrollTo({top: 0, behavior: reduce ? 'auto' : 'smooth'}); }
+  if (a) { cur = {p: byId[a.dataset.alt], vi: 0, size: null}; drawProduct(); drawGal(); $('#pdBody').scrollTo({top: 0, behavior: reduce ? 'auto' : 'smooth'}); }
 });
 $('#pdAdd').addEventListener('click', () => {
-  if (!cur.size) { const pd = $('#pd'); pd.classList.remove('shake'); void pd.offsetWidth; pd.classList.add('shake'); return; }
+  if (!cur.size) { const sz = $('#pdBody .s-sz'), lab = sz.previousElementSibling;
+    sz.scrollIntoView({block: 'center', behavior: reduce ? 'auto' : 'smooth'});
+    sz.classList.remove('need'); void sz.offsetWidth; sz.classList.add('need'); lab.classList.add('need'); lab.firstChild.textContent = 'Size · pick one ';
+    setTimeout(() => { lab.classList.remove('need'); if (lab.isConnected) lab.firstChild.textContent = 'Size '; }, 1800); return; }
   add(cur.p.id, cur.vi, cur.size); close();
 });
 
@@ -360,7 +405,7 @@ $('#lkChips').addEventListener('click', e => { const b = e.target.closest('[data
 { // drag to scroll with the mouse (touch scrolls natively); a drag never counts as a tap
   const rail = $('#lkRail'); let down = false, x0 = 0, s0 = 0, moved = false;
   rail.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') return; down = true; moved = false; x0 = e.clientX; s0 = rail.scrollLeft; });
-  addEventListener('pointermove', e => { if (!down) return; const dx = e.clientX - x0; if (Math.abs(dx) > 5) { moved = true; rail.classList.add('drag'); } rail.scrollLeft = s0 - dx; });
+  addEventListener('pointermove', e => { if (!down) return; const dx = e.clientX - x0; if (Math.abs(dx) > 8) { moved = true; rail.classList.add('drag'); } rail.scrollLeft = s0 - dx; });
   addEventListener('pointerup', () => { down = false; rail.classList.remove('drag'); });
   rail.addEventListener('click', e => { if (moved) { e.preventDefault(); moved = false; return; }
     const b = e.target.closest('[data-lid]'); if (b) openProduct(b.dataset.lid, +b.dataset.lv); });
